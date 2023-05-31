@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 
-def create_db_connection(db_file_location=r"./sqlite3.db"):
+def create_db_connection(db_file_location=r"./db.sqlite3"):
     """ Create a database connection to a SQLite database 
         If the DB file does not exist, this function will create it implicitly 
         :param db_file_location: location to the db file
@@ -47,7 +47,7 @@ def update(db_conn, query, values):
     """ Update row """
     cursor = db_conn.cursor()
     cursor.execute(query, values)
-    db_conn.commit()
+    return db_conn.commit()
 
 def select_all(db_conn, query):
     """Select all rows from table provided in query"""
@@ -58,7 +58,12 @@ def select_all(db_conn, query):
     return rows
 
 def select_where(db_conn, query, values):
-    """Select rows where condition is met"""
+    """Select rows where condition is met
+    :param db_conn: Cennection object to database
+    :param query: sql query to execute
+    :param values: tuple of values to include in the sql query
+    """
+
     cursor = db_conn.cursor()
     cursor.execute(query, values)
 
