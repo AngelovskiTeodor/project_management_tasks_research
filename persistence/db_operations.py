@@ -1,6 +1,20 @@
 import sqlite3
 from sqlite3 import Error
 
+def run_query(db_conn, query):
+    """Runs provided query
+    :param db_conn: Database connection object
+    :param query: SQL query
+    """
+    try:
+        cursor = db_conn.cursor()
+        cursor.execute(query)
+        ret = cursor.fetchall()
+        db_conn.commit()
+        return ret
+    except Error as e:
+        print(e)
+
 def create_db_connection(db_file_location=r"./db.sqlite3"):
     """ Create a database connection to a SQLite database 
         If the DB file does not exist, this function will create it implicitly 
@@ -45,17 +59,22 @@ def insert_row(db_conn, query, values):
 
 def update(db_conn, query, values):
     """ Update row """
-    cursor = db_conn.cursor()
-    cursor.execute(query, values)
-    return db_conn.commit()
+    try:
+        cursor = db_conn.cursor()
+        cursor.execute(query, values)
+        return db_conn.commit()
+    except Error as e:
+        print(e)
 
 def select_all(db_conn, query):
     """Select all rows from table provided in query"""
-    cursor = db_conn.cursor()
-    cursor.execute(query)
-
-    rows = cursor.fetchall()
-    return rows
+    try:
+        cursor = db_conn.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        return rows
+    except Error as e:
+        print(e)
 
 def select_where(db_conn, query, values):
     """Select rows where condition is met
@@ -63,17 +82,29 @@ def select_where(db_conn, query, values):
     :param query: sql query to execute
     :param values: tuple of values to include in the sql query
     """
+    try:
+        cursor = db_conn.cursor()
+        cursor.execute(query, values)
 
-    cursor = db_conn.cursor()
-    cursor.execute(query, values)
-
-    rows = cursor.fetchall()
-    return rows
+        rows = cursor.fetchall()
+        return rows
+    except Error as e:
+        print(e)
 
 def delete_row(db_conn, query, values):
     """Run delete query
     :return:
     """
-    cursor = db_conn.cursor()
-    cursor.execute(query, values)
-    db_conn.commit()
+    try:
+        cursor = db_conn.cursor()
+        cursor.execute(query, values)
+        db_conn.commit()
+    except Error as e:
+        print(e)
+
+def count(db_conn, query):
+    """Count values and rows in database
+    :param db_conn: Database connection object
+    :param query: SQL query
+    """
+    return run_query(db_conn, query)
