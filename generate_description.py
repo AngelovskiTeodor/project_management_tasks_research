@@ -1,9 +1,10 @@
 import pandas as pd
 import openai
 from api_key import get_api_key
+from data_utils import get_data_from_csv as get_data
 
 if __name__ == '__main__':
-    dataframe = pd.read_csv("./jira_dataset/jira_database_public_jira_issue_report.csv")
+    dataframe = get_data()
 
     #print(dataframe.head())
     #print(dataframe.info())
