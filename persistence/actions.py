@@ -4,6 +4,13 @@ from . import queries
 def get_db_connection(db_file_location=r"./persistence/db.sqlite3"):
     return db_operations.create_db_connection(db_file_location)
 
+def run_sql_query(db_conn, query):
+    """Runs SQL query
+    :param db_conn: Connection object to database
+    :param query: SQL Query to be executed
+    """
+    return db_operations.run_query(db_conn,query)
+
 def create_generated_descriptions_table(db_conn):
     """ Creates a table for generated descriptions in database """
     return db_operations.create_table(db_conn,queries.CREATE_GENERATED_DESCRIPTIONS_TABLE)
