@@ -67,8 +67,13 @@ def get_all(db_conn, table=None):
     query = queries.SELECT_ALL.format(table)
     return db_operations.select_all(db_conn, query)
 
-def get_missing_descriptions_only(db_conn):
-    """Selects rows with missing descriptions"""
+def get_missing_descriptions_only(db_conn, limit=None):
+    """Selects rows with missing descriptions
+    :param db_conn: Connection object to database
+    :param limit: Max number of rows from database
+    """
+    if limit:
+        return db_operations.run_query(db_conn, queries.SELECT_MISSING_DESCRIPTIONS+" LIMIT "+str(limit))
     return db_operations.run_query(db_conn, queries.SELECT_MISSING_DESCRIPTIONS)
 
 
