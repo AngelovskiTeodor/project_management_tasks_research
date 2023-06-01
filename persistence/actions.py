@@ -25,6 +25,15 @@ def insert(db_conn, table, columns, values):
     query = queries.get_insert_query(table,columns)
     return db_operations.insert_row(db_conn, query, values)
 
+def insert_title(db_conn, id, title):
+    """Inserts title and id without description in database
+    :param db_conn: Connection object to database
+    :param id: id of the entry in provided raw csv data
+    :param title: String of title
+    """
+    query = queries.get_insert_query(queries.GENERATED_DESCRIPTIONS_TABLE_NAME,"id,title")
+    return db_operations.insert_row(db_conn, query, (id, title))
+
 def update_description(db_conn, title, description):
     """ Adds/Changes the description for certain title 
     :param db_conn: Connection to database
@@ -58,9 +67,43 @@ def get_all(db_conn, table=None):
     query = queries.SELECT_ALL.format(table)
     return db_operations.select_all(db_conn, query)
 
+def get_missing_descriptions_only(db_conn, limit=None):
+    """Selects rows with missing descriptions
+    :param db_conn: Connection object to database
+    :param limit: Max number of rows from database
+    """
+    if limit:
+        return db_operations.run_query(db_conn, queries.SELECT_MISSING_DESCRIPTIONS+" LIMIT "+str(limit))
+    return db_operations.run_query(db_conn, queries.SELECT_MISSING_DESCRIPTIONS)
+
+
 def delete_row_by_title(db_conn, title):
     """Delete row where title matches the parameter title
     :param db_conn: Conection to database
     :param title: title to be deleted from database"""
-    db_operations.delete_row(db_conn, queries.DELETE_ROW_BY_TITLE, (title,))
+    return db_operations.delete_row(db_conn, queries.DELETE_ROW_BY_TITLE, (title,))
     
+def count_total_entries(db_conn, table=queries.GENERATED_DESCRIPTIONS_TABLE_NAME):
+    """Count total rows in table (including empty descriptions)
+    :param db_conn: Database connection object
+    :param table: String of table name
+    """
+    query = queries.COUNT_ALL.format(queries.GENERATED_DESCRIPTIONS_TABLE_NAME)
+    total_entries_number = db_operations.count(db_conn, query)
+    return total_entries_number
+
+def count_descriptions(db_conn):
+    """Count number of generated description in database
+    :param db_conn: Connection object to database
+    """
+    query = queries.COUNT_NOT_NULL.format(queries.GENERATED_DESCRIPTIONS_TABLE_NAME, "description")
+    total_descriptions_number = db_operations.count(db_conn,query)
+    return total_descriptions_number
+
+def count_missing_descriptions(db_conn):
+    """Count number of titles without description
+    :param db_conn: Connection object to database
+    """
+    query = queries.COUNT_NULL.format(queries.GENERATED_DESCRIPTIONS_TABLE_NAME, "description")
+    total_missing_descriptions = db_operations.count(db_conn, query)
+    return total_missing_descriptions
