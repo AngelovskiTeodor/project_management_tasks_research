@@ -2,10 +2,9 @@ import pandas
 from datetime import datetime
 from check_id_constraint import check_id_unique_constraint
 
-def get_changelogs_crom_csv():
+def get_changelogs_crom_csv(csv_file="./jira_dataset/jira_database_public_jira_issue_changelog_item.csv"):
     """Returns Pandas Dataframe with changelog data for jira issues"""
-    CSV_FILE = "./jira_dataset/jira_database_public_jira_issue_changelog_item.csv"
-    dataframe = pandas.read_csv(CSV_FILE, parse_dates=['date'], date_format="%Y-%m-%d %H:%M:%S.%f")#, index_col="id")
+    dataframe = pandas.read_csv(csv_file, parse_dates=['date'], date_format="%Y-%m-%d %H:%M:%S.%f")#, index_col="id")
     return dataframe
 
 def get_status_changelogs(dataframe):
