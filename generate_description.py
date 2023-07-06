@@ -1,9 +1,11 @@
+import sys
 import pandas as pd
 import openai
 from api_key import get_api_key
 from data_utils import get_data_from_csv as get_csv_data
 from get_titles_with_missing_descriptions import get_titles_with_missing_descrtiptions as get_db_data
 from persistence import actions as db_actions
+from time import sleep as wait
 
 def get_minutes_from_cli_arguments():
     """If provided, gets and parses the first argument from command line as number of minutes"""
