@@ -38,10 +38,11 @@ def number_of_requests_for_minutes(minutes):
     else:
         return None
 
-def execute_api_request(title, model="gpt-3.5-turbo"):
+def execute_api_request(title, model="gpt-3.5-turbo", max_tokens_in_response=256):
     """This method sends API request to generate description for a single title"""
     gpt_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
+            max_tokens=max_tokens_in_response,
             messages=[
                 get_gpt_message_object(title)
             ]
