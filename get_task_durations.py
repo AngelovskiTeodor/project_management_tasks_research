@@ -1,3 +1,5 @@
+# %%
+
 import pandas
 from datetime import datetime
 from check_id_constraint import check_id_unique_constraint
@@ -12,6 +14,25 @@ def get_status_changelogs(dataframe):
     This method filters logs that apply to the 'status' column"""
     column_name = "status"
     return dataframe[ dataframe["field_name"] == column_name ]
+
+def filter_durations_in_range(dataframe, min=1, max=10, column_name='duration'):
+    """Removes all tasks with duration less than min and greater than max"""
+    ret = dataframe[
+        (dataframe[column_name] >= min) & \
+        (dataframe[column_name] <= max)
+    ]
+    return ret
+
+def plot_durations_histogram(dataframe, min=None, max=None, column_name='duration'):
+    """Plots histogram for the task durations
+    param dataframe: Pandas Dataframe containing task durations
+    param min: Minimal value for x-axis
+    param max: Maximum value for x-axis
+    """
+    if min==None or max==None:
+        dataframe.hist(column=column_name, grid=True, edgecolor='black', align='left')
+    else:
+        dataframe.hist(column=column_name, grid=True, range=(min, max), edgecolor='black', align='left', bins=max-min)
 
 def get_durations_per_issue(dataframe):
     """Returns the duration for each jira task
@@ -29,12 +50,28 @@ def get_durations_per_issue(dataframe):
         starting_date = row["date"]#.values
         ending_date = completed_issues[completed_issues["issue_report_id"] == issue_id]["date"]#.values
         duration = ending_date - starting_date
+
+        try:
+            duration = duration.tolist()[0].days    # sometimes the list is empty
+        except:
+            continue
+
+        #print(duration.name)                    # debugging
+        #print(duration)                         # debugging
+        #print(duration.values)                  # debugging
+        #print(duration.values[0])               # debugging
+        #print(duration.values[0][0].days)       # debugging
+        #print(duration.tolist()[0].days)        # debugging
+
+        #duration = duration.tolist()[0].days
         durations_per_issue.append([issue_id, duration])
 
     ret = pandas.DataFrame(durations_per_issue, columns=column_names)
+    ret.info()
     return ret
 
 if __name__=="__main__":
+
     df = get_changelogs_crom_csv()
     df_filtered = get_status_changelogs(df)
     #df['date'] = df['date'].apply(lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S.%f"))
@@ -56,3 +93,10 @@ if __name__=="__main__":
     changelog_sample3 = durations.iloc[0]['duration']
     print(changelog_sample3)
     durations.info()
+    plot_durations_histogram(durations)
+
+    filtered_durations = filter_durations_in_range(durations, -10,20)
+    filtered_durations.info()
+    plot_durations_histogram(filtered_durations, -1, 11)
+
+# %%
