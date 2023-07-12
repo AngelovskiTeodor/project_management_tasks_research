@@ -165,3 +165,6 @@ api_key.py
 
 # dataset
 jira_dataset/
+
+logs/
+outputs/
