@@ -1,5 +1,5 @@
 from persistence import actions as db_actions
-from data_utils import get_data_from_csv as get_data, get_rows_with_missing_values as get_empty_rows
+from data_utils import get_jira_tasks_from_csv as get_data, get_rows_with_missing_values as get_empty_rows
 
 def insert_titles_with_missing_descriptions(db_conn, dataframe):
     for index, row in dataframe.iterrows():

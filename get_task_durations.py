@@ -23,21 +23,32 @@ def filter_durations_in_range(dataframe, min=1, max=10, column_name='duration'):
     ]
     return ret
 
+def plot_histogram_of_column(dataframe, column_name, min=None, max=None):
+    """Plots histogram of a column in the dataset provided as agruments
+    param dataframe: Pandas Dataframe
+    param min: Minimal value for x-axis
+    param max: Maximum value for x-axis
+    """
+    if min==None or max==None:
+        return dataframe.hist(column=column_name, grid=True, edgecolor='black', align='left')
+    else:
+        return dataframe.hist(column=column_name, grid=True, range=(min, max), edgecolor='black', align='left', bins=max-min)
+
 def plot_durations_histogram(dataframe, min=None, max=None, column_name='duration'):
     """Plots histogram for the task durations
     param dataframe: Pandas Dataframe containing task durations
     param min: Minimal value for x-axis
     param max: Maximum value for x-axis
     """
-    if min==None or max==None:
-        dataframe.hist(column=column_name, grid=True, edgecolor='black', align='left')
-    else:
-        dataframe.hist(column=column_name, grid=True, range=(min, max), edgecolor='black', align='left', bins=max-min)
+    return plot_histogram_of_column(dataframe, column_name, min, max)
 
-def get_durations_per_issue(dataframe):
+def get_all_durations_per_issue(dataframe=None):
     """Returns the duration for each jira task
     The duration is defined as time between setting status
     to 'In Progress' and changing it to something else"""
+    if dataframe == None:
+        dataframe = get_changelogs_crom_csv()
+
     column_names = ["issue_id","duration"]
     started_issues = dataframe[ (dataframe["field_name"] == "status") & \
                                 (dataframe["new_value"] == "In Progress")]
@@ -89,7 +100,7 @@ if __name__=="__main__":
 
     print("Greater date: ", changelog_sample['date'].values[0] > changelog_sample2['date'].values[0])
 
-    durations = get_durations_per_issue(df_filtered)
+    durations = get_all_durations_per_issue(df_filtered)
     changelog_sample3 = durations.iloc[0]['duration']
     print(changelog_sample3)
     durations.info()

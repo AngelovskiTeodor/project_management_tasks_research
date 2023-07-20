@@ -3,7 +3,7 @@ import pandas as pd
 import openai
 from time import sleep as wait
 from api_key import get_api_key
-from data_utils import get_data_from_csv as get_csv_data
+from data_utils import get_jira_tasks_from_csv as get_csv_data
 from get_titles_with_missing_descriptions import get_titles_with_missing_descrtiptions as get_db_data
 from persistence import actions as db_actions
 
@@ -62,7 +62,8 @@ def iterate_description_generation(database_connection, dataframe):
 def run_description_generation(database_connection, duration_in_minutes=None):
     """Generates descriptions using gpt-3.5-turbo for duration provided as argument or indefinitely"""
     dataframe = get_db_data(db, run_script_for_minutes(duration_in_minutes))
-    return iterate_description_generation(database_connection, dataframe)
+    generated_descriptions =  iterate_description_generation(database_connection, dataframe)
+    return generated_descriptions
 
 if __name__ == '__main__':
     cli_arguments = sys.argv

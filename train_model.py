@@ -4,7 +4,8 @@ from sklearn.preprocessing import MinMaxScaler
 from torch.nn.utils.clip_grad import clip_grad_norm
 from torch.utils.data import TensorDataset, DataLoader
 from transformers import BertTokenizer, BertModel, AdamW, get_linear_schedule_with_warmup, Trainer, TrainingArguments
-from make_dataset import get_jira_tasks, filter_long_descriptions, split_dataset, inputs_and_labels
+from make_dataset import get_jira_tasks as get_dataset, filter_long_descriptions, split_dataset, inputs_masks_labels
+from sklearn.metrics import mean_absolute_error as mae, mean_absolute_percentage_error as mape, mean_squared_error as mse, median_absolute_error as mdae
 
 class BertRegressor(torch.nn.Module):
     """Implementation of Bert Regressor Model"""
@@ -12,7 +13,7 @@ class BertRegressor(torch.nn.Module):
         super(BertRegressor, self).__init__()
         D_in = 768
         D_out = 1
-        self.bert = BertModel.from_pretrained('bert-base')
+        self.bert = BertModel.from_pretrained('bert-base-cased')
         self.regressor = torch.nn.Sequential(
             torch.nn.Dropout(drop_rate),
             torch.nn.Linear(D_in, D_out)
@@ -27,9 +28,9 @@ class BertRegressor(torch.nn.Module):
 
 def create_dataloader(inputs, masks, labels, batch_size):
     """Returns dataloader"""
-    input_tensor = torch.tensor(inputs)
-    mask_tensor = torch.tensor(masks)
-    label_tensor = torch.tensor(labels)
+    input_tensor = torch.tensor(inputs.tolist())
+    mask_tensor = torch.tensor(masks.tolist())
+    label_tensor = torch.tensor(labels.tolist())
     dataset = TensorDataset(input_tensor, mask_tensor, label_tensor)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     return dataloader
@@ -66,11 +67,11 @@ def train_regressor_model():
     """Returns trained model for estimating task duration"""
     MAX_TOKENS_PER_INPUT_SEQUENCE=64    # 64 for development, 256 in release
 
-    df_dataset = get_jira_tasks()
+    df_dataset = get_dataset()
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
-    encoded_corpus = tokenizer(text=df_dataset.description.tolist(),
+    encoded_corpus = tokenizer(text=df_dataset.description.values.tolist(),
                             add_special_tokens=True,
                             padding='max_length',
                             truncation='longest_first',
@@ -79,27 +80,30 @@ def train_regressor_model():
     input_ids = encoded_corpus['input_ids']
     attention_mask = encoded_corpus['attention_mask']
     
-    descriptions = filter_long_descriptions(tokenizer, df_dataset, MAX_TOKENS_PER_INPUT_SEQUENCE)
+    descriptions = df_dataset[['description']] #descriptions = filter_long_descriptions(tokenizer, df_dataset['description'], MAX_TOKENS_PER_INPUT_SEQUENCE)   # needs to be debugged
 
     input_ids = numpy.array(input_ids)[descriptions]
     attention_mask = numpy.array(attention_mask)[descriptions]
-    labels = df_dataset.duration.to_numpy()[descriptions]
+    labels = df_dataset.duration.to_numpy()#[descriptions]
 
-    train_set, test_set, validation_set = split_dataset(descriptions, test_set_length=.8, train_set_length=.1, validation_set_length=.1)
-    train_inputs, train_labels = inputs_and_labels(train_set)
-    test_inputs, test_labels = inputs_and_labels(test_set)
-    validation_inputs, validation_labels = inputs_and_labels(validation_set)
-                                         
+    import pandas as pd
+    import numpy as np
+    transformed_dataset = pd.DataFrame({'input':input_ids, 'mask':attention_mask, 'label':labels})
+    train_set, test_set, validation_set = split_dataset(transformed_dataset, train_set_length=.8, test_set_length=.1, validation_set_length=.1, axis=0)
+    train_inputs, train_masks, train_labels = inputs_masks_labels(train_set)
+    test_inputs, test_masks, test_labels = inputs_masks_labels(test_set)
+    validation_inputs, validation_masks, validation_labels = inputs_masks_labels(validation_set)
+    
     duration_scaler = MinMaxScaler(feature_range=(-1,1))
     duration_scaler.fit(train_labels)
     train_labels = duration_scaler.transform(train_labels)
     test_labels = duration_scaler.transform(test_labels)
     validation_labels = duration_scaler.transform(validation_labels)
 
-    batch_size = 32     # what is batch size?
-    train_dataloader = create_dataloader(train_inputs, train_labels, batch_size)
-    test_dataloader = create_dataloader(test_inputs, test_labels, batch_size)
-    validation_dataloader = create_dataloader(validation_inputs, validation_labels, batch_size)
+    batch_size = 32
+    train_dataloader = create_dataloader(inputs=train_inputs, masks=train_masks, labels=train_labels, batch_size=batch_size)
+    test_dataloader = create_dataloader(inputs=test_inputs, masks=test_masks, labels=test_labels, batch_size=batch_size)
+    validation_dataloader = create_dataloader(inputs=validation_inputs, masks=validation_masks, labels=validation_labels, batch_size=batch_size)
 
     model = BertRegressor(drop_rate=0.2)
 
@@ -116,8 +120,40 @@ def train_regressor_model():
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=total_steps)
     loss_function = torch.nn.MSELoss()
 
+    train_set, test_set, validation_set = split_dataset(df_dataset, train_set_length=.8, test_set_length=.1, validation_set_length=.1, axis=0)
+
     #model = run_epochs(model, optimizer, scheduler, loss_function, epochs, train_dataloader, device, clip_value=2)
-    model = run_trainer(model, train_dataloader)
+    model = run_trainer(model, train_set)
+
+def predict_durations_for_inputs_unscaled(model, inputs, device):
+    """Returns list of predicted values for each description in inputs argument"""
+    # do i need masks for dataloader
+    model.eval()
+    output = []
+    batch_size = 32
+    dataloader = create_dataloader(inputs, batch_size=batch_size)
+    for batch in dataloader:
+        batch_inputs = (b.to(device) for b in batch)
+        with torch.no_grad():
+            output += model(batch_inputs).view(1,-1).tolist()[0]
+    return output
+
+def predict_durations_for_inputs(model, inputs, scaler):
+    """Returns list of predicted durations for each description in inputs argument"""
+    predicted_values = predict_durations_for_inputs_unscaled(model, inputs)
+    predicted_durations = scaler.inverse_transform(predicted_values)
+    return predicted_durations
+
+def run_validation(model, validation_inputs, validation_labels, scaler):
+    """Calculates different metrics"""
+    predicted_durations = predict_durations_for_inputs_unscaled(model, validation_inputs)
+    metrics = {
+        "mean_absolute_error": mae(validation_labels, predicted_durations),
+        "mean_absolute_percentage_error": mape(validation_labels, predicted_durations),
+        "mean_squared_error": mse(validation_labels, predicted_durations),
+        "median_absolute_error": mdae(validation_labels, predicted_durations)
+    }
+    return metrics
 
 if __name__=="__main__":
     model = train_regressor_model()
