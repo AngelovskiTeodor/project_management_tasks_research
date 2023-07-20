@@ -1,5 +1,5 @@
 import pandas as pd
-from data_utils import get_data_from_csv as get_data
+from data_utils import get_jira_tasks_from_csv as get_data
 
 def is_column_unique(dataframe, column_name):
     id_series = dataframe[column_name].squeeze()
