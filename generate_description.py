@@ -66,12 +66,11 @@ def run_description_generation(database_connection, duration_in_minutes=None):
     return generated_descriptions
 
 if __name__ == '__main__':
+    number_of_minutes = None
     cli_arguments = sys.argv
     if len(cli_arguments) > 1:
-        try:
+        if cli_arguments[1].isdigit():
             number_of_minutes = int(cli_arguments[1])
-        except:
-            number_of_minutes = None
 
     db = db_actions.get_db_connection()
     
@@ -79,7 +78,7 @@ if __name__ == '__main__':
     #print(dataframe.info())
     #print(dataframe.describe())
 
-    if number_of_minutes:
+    if number_of_minutes is not None:
         dataframe = run_description_generation(db, number_of_minutes)
     else:
         dataframe = run_description_generation(db)

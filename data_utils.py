@@ -23,6 +23,26 @@ def get_task_descriptions():
     df = df[["id", "description"]]
     return df
 
+def reverse_dataframe(dataframe:pandas.DataFrame):
+    """Reverses the order of the rows"""
+    dataframe = dataframe.iloc[::-1]
+    return dataframe
+
+def rename_columns(dataframe:pandas.DataFrame, current_column_names:list=['description', 'duration'], new_column_names=['text','label']):
+    """Renames column names provided in arguments as list/tuple, to column names provided in arguments as list/tuple"""
+    if len(current_column_names) != len(new_column_names):
+        print("Can not pair current names to new names")
+        raise RuntimeError()
+    renames = dict()
+    for i in range(len(current_column_names)):
+        renames[current_column_names[i]] = new_column_names[i]
+    dataframe = dataframe.rename(columns=renames, inplace=False)
+    return dataframe
+
+def serialize_to_csv(dataframe:pandas.DataFrame, file_path="/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"):
+    dataframe.to_csv(file_path, sep=',', index=False, encoding='utf-8')
+    return dataframe
+
 if __name__=="__main__":
     df = get_jira_tasks_from_csv()
     df.info()

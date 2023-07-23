@@ -1,7 +1,7 @@
 import numpy
 import pandas
-from data_utils import get_task_descriptions as get_descriptions
-from get_task_durations import get_all_durations_per_issue as get_durations, filter_durations_in_range as filter_durations, plot_histogram_of_column as plot_hist
+from data_utils import get_task_descriptions as get_descriptions, serialize_to_csv
+from get_task_durations import calculate_all_durations_per_issue as get_durations, filter_durations_in_range as filter_durations, plot_histogram_of_column as plot_hist
 
 class WeightsNotEqualToOneError(RuntimeError):
     def __init__(self, message):
@@ -15,23 +15,33 @@ def get_jira_tasks():
     """Returns dataframe with description and duration for the tasks"""
     df_desc = get_descriptions()
     df_durations = get_durations()
-    MINUMUM_DURATION = 2
-    MAXIMUM_DURATION = 5
+    print("All durations dataframe") # debugging
+    print(df_durations) # debugging
+    MINUMUM_DURATION = 1
+    MAXIMUM_DURATION = 10
     df_durations = filter_durations(df_durations, MINUMUM_DURATION, MAXIMUM_DURATION)
-    
+    print("Filtered durations dataframe:")  # debugging
+    print(df_durations) # debugging
+    df_durations.info() # debugging
+
     column_names = ["description", "duration"]
     dataset = []
 
     for i, row in df_durations.iterrows():
         id = row['issue_id']
 
-        if id not in df_desc['id'].values.tolist():
-            continue
+        # if id not in df_desc['id'].values.tolist():
+        #     print("ID {} is not paired with any description".format(id))    # debugging
+        #     continue
 
         duration = row["duration"]
         desc = df_desc[df_desc["id"] == id]
         try:
+            print("Before getting description as a string:") # debugging
+            print(desc) # debugging
             desc = desc.iat[0,1]    #.at[0,'description']
+            print("After getting description as a string:") # debugging
+            print(desc) # debugging
         except IndexError as err:
             # print("=== EXCEPTION ===")
             # print(err)
@@ -45,6 +55,7 @@ def get_jira_tasks():
 
         dataset.append([desc, duration])
     dataset = pandas.DataFrame(dataset, columns=column_names)
+    print(serialize_to_csv(dataset))
     return dataset
 
 def filter_long_descriptions(tokenizer, df_dataset:pandas.DataFrame, max_tokens_per_input_sequence=256):
