@@ -1,5 +1,8 @@
 import pandas
 
+PROCESSED_DATA_PATH = "./processed_data/processed_data.csv"
+#PROCESSED_DATA_PATH = "/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"
+
 def get_jira_tasks_from_csv():
     """Reads Jira Tasks data from CSV file and returns pandas Dataframe"""
     #DIRECTORY = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'   # GOOGLE DRIVE PATH when using Google Collab
@@ -39,7 +42,7 @@ def rename_columns(dataframe:pandas.DataFrame, current_column_names:list=['descr
     dataframe = dataframe.rename(columns=renames, inplace=False)
     return dataframe
 
-def serialize_to_csv(dataframe:pandas.DataFrame, file_path="/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"):
+def serialize_to_csv(dataframe:pandas.DataFrame, file_path=PROCESSED_DATA_PATH):
     dataframe.to_csv(file_path, sep=',', index=False, encoding='utf-8')
     return dataframe
 

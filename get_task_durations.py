@@ -5,8 +5,8 @@ from datetime import datetime
 from data_utils import get_unique_values, reverse_dataframe
 from check_id_constraint import check_id_unique_constraint
 
-#CHANGELOGS_CSV_FILE_PATH = './jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
-CHANGELOGS_CSV_FILE_PATH = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
+CHANGELOGS_CSV_FILE_PATH = './jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
+#CHANGELOGS_CSV_FILE_PATH = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
 TASK_ID_COLUMN_NAME = "issue_report_id"
 STARTING_STATUS_VALUES = ["Open", "Reopened", "New", "Patch Available"]
 ENDING_STATUS_VALUES = ["Closed", "Resolved", "Done", "Submitted"]

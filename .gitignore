@@ -159,12 +159,24 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Visual Studio Code
+.vscode/
 
 # api key
 api_key.py
 
 # dataset
 jira_dataset/
+processed_data/
 
 logs/
 outputs/
+
+# model training logs
+training_logs/
+
+# trained model
+trained_classifier*.sav
+trained_regressor*.sav
+trained_model*.sav
+
