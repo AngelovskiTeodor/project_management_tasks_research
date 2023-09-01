@@ -179,4 +179,6 @@ training_logs/
 trained_classifier*.sav
 trained_regressor*.sav
 trained_model*.sav
-
+*.bin
+*.pt
+*.pth
