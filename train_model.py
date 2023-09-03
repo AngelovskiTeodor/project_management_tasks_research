@@ -1,5 +1,6 @@
 import numpy
 import torch
+from tensorflow import unstack;
 from sklearn.preprocessing import MinMaxScaler
 from torch.nn.utils.clip_grad import clip_grad_norm
 from torch.utils.data import TensorDataset, DataLoader
@@ -154,6 +155,31 @@ def run_validation(model, validation_inputs, validation_labels, scaler):
         "median_absolute_error": mdae(validation_labels, predicted_durations)
     }
     return metrics
+
+def get_max_index(array):
+    """Finds the maximum value in an array and returns its index"""
+    max_index = 0
+    max_value = array[max_index]
+    for elem, i in zip(array, range(0,len(array))):
+        if elem > max_value:
+            max_value = elem
+            max_index = i
+    for elem, i in zip(array, range(0, len(array))):
+        if i == max_index:
+            continue
+        if elem == max_value:
+            raise RuntimeError("The array has two max values")
+    return max_index
+    
+def softmax(sequence_classifier_output, softmax_function=numpy.argmax):
+    """Softmax function that converts raw model output to predicted class/value"""
+    predicted_values = []
+    logits = sequence_classifier_output.logits;
+    logits = unstack(logits)
+    for logit in logits:
+        predicted_value = softmax_function(logit)
+        predicted_values.append(predicted_value)
+    return predicted_values
 
 if __name__=="__main__":
     model = train_regressor_model()
