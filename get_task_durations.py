@@ -2,11 +2,9 @@
 
 import pandas
 from datetime import datetime
-from data_utils import get_unique_values, reverse_dataframe
+from data_utils import get_unique_values, reverse_dataframe, get_global_constants
 from check_id_constraint import check_id_unique_constraint
 
-CHANGELOGS_CSV_FILE_PATH = './jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
-#CHANGELOGS_CSV_FILE_PATH = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
 TASK_ID_COLUMN_NAME = "issue_report_id"
 STARTING_STATUS_VALUES = ["Open", "Reopened", "New", "Patch Available"]
 ENDING_STATUS_VALUES = ["Closed", "Resolved", "Done", "Submitted"]
@@ -32,7 +30,7 @@ class DateByStatusNotFoundError(ChangelogError):
     def __init__(self, changelog_entry: pandas.DataFrame, message="Date not found because the dataframe does not contain status value that starts or ends tasks") -> None:
         super().__init__(changelog_entry, message)
 
-def get_changelogs_crom_csv(csv_file=CHANGELOGS_CSV_FILE_PATH):
+def get_changelogs_crom_csv(csv_file=get_global_constants().CHANGELOGS_CSV_FILE_PATH):
     """Returns Pandas Dataframe with changelog data for jira issues"""
     dataframe = pandas.read_csv(csv_file, parse_dates=['date'], date_format="%Y-%m-%d %H:%M:%S.%f")#, index_col="id")
     return dataframe

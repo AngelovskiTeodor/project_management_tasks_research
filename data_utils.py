@@ -1,13 +1,34 @@
+import os
+import torch
 import pandas
 
-PROCESSED_DATA_PATH = "./processed_data/processed_data.csv"
-#PROCESSED_DATA_PATH = "/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"
+class GlobalConstants:
+    def __init__(self):
+        google_collab_environment = True if os.getenv("COLAB_RELEASE_TAG") else False
+        if google_collab_environment:
+            self.PROCESSED_DATA_PATH = "/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"
+            self.CSV_DATASET_PATH = "/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"
+            self.MODEL_PATH = "/content/drive/MyDrive/pytorch_model.bin"
+            self.DIRECTORY = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
+            self.CHANGELOGS_CSV_FILE_PATH = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
+        else:
+            self.PROCESSED_DATA_PATH = "./processed_data/processed_data.csv"
+            self.CSV_DATASET_PATH = "./processed_data/processed_data.csv"
+            self.MODEL_PATH = "pytorch_model.bin"
+            self.DIRECTORY = "./jira_dataset/jira_database_public_jira_issue_report.csv"
+            self.CHANGELOGS_CSV_FILE_PATH = './jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
+
+        if torch.cuda.is_available():
+            self.DEVICE_STRING = "cuda"
+        else:
+            print("GPU is not available. CPU will be used to train the model")
+            self.DEVICE_STRING = "cpu"
+        self.DEVICE = torch.device(self.DEVICE_STRING)
+    
 
 def get_jira_tasks_from_csv():
     """Reads Jira Tasks data from CSV file and returns pandas Dataframe"""
-    #DIRECTORY = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'   # GOOGLE DRIVE PATH when using Google Collab
-    DIRECTORY = "./jira_dataset/jira_database_public_jira_issue_report.csv"     #   Local repo path
-    dataframe = pandas.read_csv(DIRECTORY)
+    dataframe = pandas.read_csv(get_global_constants().DIRECTORY)
     return dataframe
 
 def get_unique_values(dataframe, column_name):
@@ -42,7 +63,11 @@ def rename_columns(dataframe:pandas.DataFrame, current_column_names:list=['descr
     dataframe = dataframe.rename(columns=renames, inplace=False)
     return dataframe
 
-def serialize_to_csv(dataframe:pandas.DataFrame, file_path=PROCESSED_DATA_PATH):
+def get_global_constants():
+    """Returns object with required constants relevant to the environment that the code is running on"""
+    return GlobalConstants()
+
+def serialize_to_csv(dataframe:pandas.DataFrame, file_path=get_global_constants().PROCESSED_DATA_PATH):
     dataframe.to_csv(file_path, sep=',', index=False, encoding='utf-8')
     return dataframe
 
