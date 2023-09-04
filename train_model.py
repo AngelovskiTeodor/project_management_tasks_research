@@ -145,15 +145,21 @@ def predict_durations_for_inputs(model, inputs, scaler):
     predicted_durations = scaler.inverse_transform(predicted_values)
     return predicted_durations
 
-def run_validation(model, validation_inputs, validation_labels, scaler):
-    """Calculates different metrics"""
-    predicted_durations = predict_durations_for_inputs_unscaled(model, validation_inputs)
+def validate(true_values, predicted_values):
+    """Calculates metrics (MAE, MAPE, MSE, MDAE) for provided predicted and true values"""
     metrics = {
-        "mean_absolute_error": mae(validation_labels, predicted_durations),
-        "mean_absolute_percentage_error": mape(validation_labels, predicted_durations),
-        "mean_squared_error": mse(validation_labels, predicted_durations),
-        "median_absolute_error": mdae(validation_labels, predicted_durations)
+        "mean_absolute_error": mae(true_values, predicted_values),
+        "mean_absolute_percentage_error": mape(true_values, predicted_values),
+        "mean_squared_error": mse(true_values, predicted_values),
+        "median_absolute_error": mdae(true_values, predicted_values)
     }
+    return metrics
+
+def run_validation(model, validation_inputs, validation_labels, scaler):
+    """Makes predictions and calculates metrics: MAE, MAPE, MSE, MDAE"""
+    """TODO: add softmax"""
+    predicted_durations = predict_durations_for_inputs_unscaled(model, validation_inputs)
+    metrics = validate(validation_labels, predicted_durations)
     return metrics
 
 def get_max_index(array):
