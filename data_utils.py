@@ -1,6 +1,8 @@
 import os
 import torch
 import pandas
+import progressbar
+#from tqdm import tqdm
 
 class GlobalConstants:
     def __init__(self):
@@ -8,7 +10,7 @@ class GlobalConstants:
         if google_collab_environment:
             self.PROCESSED_DATA_PATH = "/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"
             self.CSV_DATASET_PATH = "/content/drive/MyDrive/Faks/research_uiktp/processed_data/processed_data.csv"
-            self.MODEL_PATH = "/content/drive/MyDrive/pytorch_model.bin"
+            self.MODEL_PATH = "/content/drive/MyDrive/Faks/research_uiktp/pytorch_model.bin"
             self.DIRECTORY = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
             self.CHANGELOGS_CSV_FILE_PATH = '/content/drive/MyDrive/Faks/research_uiktp/jira_dataset/jira_database_public_jira_issue_changelog_item.csv'
         else:
@@ -25,6 +27,17 @@ class GlobalConstants:
             self.DEVICE_STRING = "cpu"
         self.DEVICE = torch.device(self.DEVICE_STRING)
     
+def progress_bar(max_value):
+    """Progress bar"""
+    widgets = [
+        ' [', 
+            progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
+        '] ',
+        progressbar.Bar('*'),' (',
+        progressbar.ETA(), ') ',
+    ]
+    bar = progressbar.ProgressBar(maxval=max_value, widgets=widgets)
+    return bar
 
 def get_jira_tasks_from_csv():
     """Reads Jira Tasks data from CSV file and returns pandas Dataframe"""

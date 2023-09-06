@@ -1,6 +1,6 @@
 import numpy
 import torch
-from tensorflow import unstack;
+from data_utils import progress_bar
 from sklearn.preprocessing import MinMaxScaler
 from torch.nn.utils.clip_grad import clip_grad_norm
 from torch.utils.data import TensorDataset, DataLoader
@@ -139,6 +139,39 @@ def predict_durations_for_inputs_unscaled(model, inputs, device):
             output += model(batch_inputs).view(1,-1).tolist()[0]
     return output
 
+def predict_tokenized_tensor_batch(model, input_ids, input_masks):
+    """Predicts durations for subset of tokenized ids and masks of type torch.Tensor"""
+    predicted_durations = model.forward(input_ids, input_masks)     #   loaded_model.forward requires arguments of type torch.Tensor
+    predicted_durations = softmax(predicted_durations)
+    return predicted_durations  
+
+def predict_durations_for_tokenized_tensor_inputs(model, input_ids, input_masks, batch_size=16):
+    """Predicts the durations for provided tokenized ids and masks of type torch.Tensor"""
+    if (input_ids.size(dim=0) != input_masks.size(dim=0)):
+        raise RuntimeError("input_ids.size ({}) and input_masks.size ({}) do not match".format(input_ids.size(dim=0), input_masks.size(dim=0)))
+    
+    input_size = input_ids.size(dim=0)
+    model.eval()
+    
+    if input_size <= batch_size:
+        predicted_durations = predict_tokenized_tensor_batch(model, input_ids, input_masks)
+        return predicted_durations
+    
+    #bar = progress_bar(input_size//batch_size).start()
+    predict_durations = []
+    for i in range(input_size//batch_size):
+        subset_ids = input_ids[i*batch_size:(i+1)*batch_size]
+        subset_masks = input_masks[i*batch_size:(i+1)*batch_size]
+        predicted_subset = predict_tokenized_tensor_batch(model, subset_ids, subset_masks)
+        predict_durations.extend(predicted_subset)
+        #bar.update(i)
+    if input_size%batch_size != 0:
+        subset_ids = input_ids[(input_size//batch_size)*batch_size:]
+        subset_masks = input_masks[(input_size//batch_size)*batch_size:]
+        predicted_subset = predict_tokenized_tensor_batch(model, subset_ids, subset_masks)
+        predict_durations.extend(predicted_subset)
+    return predict_durations
+
 def predict_durations_for_inputs(model, inputs, scaler):
     """Returns list of predicted durations for each description in inputs argument"""
     predicted_values = predict_durations_for_inputs_unscaled(model, inputs)
@@ -180,8 +213,8 @@ def get_max_index(array):
 def softmax(sequence_classifier_output, softmax_function=numpy.argmax):
     """Softmax function that converts raw model output to predicted class/value"""
     predicted_values = []
-    logits = sequence_classifier_output.logits;
-    logits = unstack(logits)
+    logits = sequence_classifier_output.logits
+    logits = logits.tolist()
     for logit in logits:
         predicted_value = softmax_function(logit)
         predicted_values.append(predicted_value)
