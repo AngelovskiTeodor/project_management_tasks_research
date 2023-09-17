@@ -84,6 +84,60 @@ def serialize_to_csv(dataframe:pandas.DataFrame, file_path=get_global_constants(
     dataframe.to_csv(file_path, sep=',', index=False, encoding='utf-8')
     return dataframe
 
+def count_samples_from_class(dataframe:pandas.DataFrame, data_class, column_name='label'):
+    """Counts the samples from provided label/class/duration"""
+    sub_df = dataframe.loc[dataframe[column_name] == data_class]
+    number_of_samples = len(sub_df)
+    return number_of_samples
+
+def get_dataset_classes(dataframe:pandas.DataFrame, column_name='label'):
+    """Returns a list of all different classes in dataframe"""
+    return get_unique_values(dataframe, column_name)
+
+def count_samples_per_class(dataframe:pandas.DataFrame, column_name='label'):
+    """Returns dictionary with number of samples for each class in the dataset"""
+    classes = get_dataset_classes(dataframe, column_name=column_name)
+    ret = {}
+    for c in classes:
+        ret[c] = count_samples_from_class(dataframe, c, column_name=column_name)
+    return ret
+
+def get_class_with_the_least_samples(dataframe:pandas.DataFrame):
+    """Returns the class/label/duration with the least samples"""
+    number_of_samples_per_class = count_samples_per_class(dataframe)
+    classes = number_of_samples_per_class.keys()
+    classes = list(classes)
+    
+    print(classes)  #   debugging
+
+    min_class = classes[0]
+    min_value = number_of_samples_per_class[min_class]
+    for c in classes:
+        if number_of_samples_per_class[c] < min_value:
+            min_class = c
+            min_value = number_of_samples_per_class[c]
+    return min_class
+
+def get_maximum_sample_size_for_down_sampling(dataframe:pandas.DataFrame):
+    """Returns the number of samples in each class for balancing and downsampling the dataset"""
+    min_class = get_class_with_the_least_samples(dataframe)
+    number_of_samples = count_samples_from_class(dataframe, min_class)
+    return number_of_samples
+
+def down_sample_dataframe(dataframe:pandas.DataFrame):
+    """Returns balanced dataframe in which the number of samples for each class
+    is the lowest number of samples between the classes"""
+    sample_size = get_maximum_sample_size_for_down_sampling(dataframe)
+    dataframe = (dataframe.groupby('label', as_index=False)
+        .apply(lambda x: x.sample(n=1939))
+        .reset_index(drop=True))
+    return dataframe
+
+def balance_dataframe(dataframe:pandas.DataFrame):
+    """Returns dataframe with the same number of samples for each class"""
+    ret = down_sample_dataframe(dataframe)
+    return ret
+
 if __name__=="__main__":
     df = get_jira_tasks_from_csv()
     df.info()
