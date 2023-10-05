@@ -26,6 +26,7 @@ class GlobalConstants:
             print("GPU is not available. CPU will be used to train the model")
             self.DEVICE_STRING = "cpu"
         self.DEVICE = torch.device(self.DEVICE_STRING)
+        self.RANDOM_STATE = 42
     
 def progress_bar(max_value):
     """Progress bar"""
@@ -129,7 +130,7 @@ def down_sample_dataframe(dataframe:pandas.DataFrame):
     is the lowest number of samples between the classes"""
     sample_size = get_maximum_sample_size_for_down_sampling(dataframe)
     dataframe = (dataframe.groupby('label', as_index=False)
-        .apply(lambda x: x.sample(n=1939))
+        .apply(lambda x: x.sample(n=sample_size, random_state=get_global_constants().RANDOM_STATE))
         .reset_index(drop=True))
     return dataframe
 
